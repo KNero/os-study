@@ -1,7 +1,7 @@
-all: VirtualOS.bin
+all: Kernel32.bin
 
-VirtualOS.bin: Source/VirtualOS.asm
-	nasm -o Temp/VirtualOS.bin Source/VirtualOS.asm
+Kernel32.bin: Source/EntryPoint.s
+	nasm -o Temp/Kernel32.bin $<
 
 clean:
-	rm -f Temp/VirtualOS.bin
+	rm -f Temp/Kernel32.bin
