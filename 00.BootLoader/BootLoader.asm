@@ -3,7 +3,7 @@
 
 SECTION .txt    ; text 섹션(세그먼트)을 정의
 
-jmp 0x07c0:START    ; CS 세그먼트 레지스터에 0x07C0을 복사하면서 START 레이블로 이동
+jmp 0x07C0:START    ; CS 세그먼트 레지스터에 0x07C0을 복사하면서 START 레이블로 이동
 
 TOTALSECTORCOUNT: dw 1   ; 부트 로더를 제외한 MINT64 OS 이미지의 크기. 최대 1152 세터 (0x90000byte) 까지 가능
 
@@ -147,7 +147,7 @@ PRINTMESSAGE:
 
 .MESSAGELOOP:
     mov cl, byte[si]    ; MESSAGE1의 어드레스에서 SI 레지스터 값만큼 더한 위치의 문자를 CL 레지스터에 복사
-                        ; CL 레지스터는 CX 레지스터의 하위 1바이트만 사용
+                        ; CL 레지스터는 CX 레지스터의 하위 1바이트를 의미
                         ; 문자열은 1바이트면 충분하므로 CX 레지스터의 하위 1바이트만 사용
     cmp cl, 0       ; 복사된 문자와 0을 비교
     je .MESSAGEEND  ; 복사한 문자의 값이 0이면 문자열이 종료되었음을 의미하므로 .MESSAGEEND로 이동하여 문자 출력 종료
