@@ -13,8 +13,8 @@ START:
 
     ; 보호 모드로 진입
     ; Disable Paging, Disable Cache, Internal FPU, Disable Align Check, Enable ProtectedMode
-    mov eax, 0x4000003B ;PG=0, CD=1, NW=0, AM=0, WP=0, NE=1, ET=1, TS=1, EM=0, MP=1, PE=1
-    mov cr0, eax    ; CR0 컨트롤 레지스터에 위에서 저장한 플래그를 설정하여 보호모드로 전환
+    mov eax, 0x4000003B ; PG=0, CD=1, NW=0, AM=0, WP=0, NE=1, ET=1, TS=1, EM=0, MP=1, PE=1
+    mov cr0, eax        ; CR0 컨트롤 레지스터에 위에서 저장한 플래그를 설정하여 보호 모드로 전환
 
     ; 커널 코드 세그먼트를 0x00을 기준으로 하는 것으로 교체하고 EIP의 값을 0x00을 기준으로 재설정
     ; CS 세그먼트 셀렉터 : EIP
@@ -97,8 +97,9 @@ align 8, db 0
 dw 0x0000
 ; GDTR 자료구조 정의
 GDTR:
-    dw GDTEND - GDT - 1  ; 아래에 위치하는 GDT 테이블의 전체 크기
+    dw GDTEND - GDT - 1     ; 아래에 위치하는 GDT 테이블의 전체 크기
     dd (GDT - $$ + 0x10000) ; 아래에 위치하는 GDT 테이블의 시작 어드레스
+                            ; 실제 GDT가 있는 선형 주소 계산을 위해 현재 섹션 내의 GDT 오프셋에 세그먼트의 기준 주소인 0x10000 더함
 
 ; GDT 테이블 정의
 GDT:
@@ -126,7 +127,7 @@ GDT:
         db 0x00     ; Base [23:16]
         db 0x92     ; P=1, DPL=0, Data Segment, Read/Write
         db 0xCF     ; G=1, D=1, L=0, Limit[19:16]
-        db 0x00     ; Base [31, 24]
+        db 0x00     ; Base [31:24]
 GDTEND:
 
 SWITCHSUCCESSMESSAGE: db 'Switch To Protected Mode Success.', 0
