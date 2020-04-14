@@ -28,7 +28,7 @@ Disk.img: 00.BootLoader/BootLoader.bin 01.Kernel32/Temp/Kernel32.bin
 	@echo ================ Disk Image Build Start ================
 	@echo
 
-	cat $^ > Disk.img
+	./04.Utility/00.ImageMaker/ImageMaker.exe $^
 
 	@echo
 	@echo ================ All Build Complete ================

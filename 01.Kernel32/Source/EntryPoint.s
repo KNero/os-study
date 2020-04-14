@@ -1,15 +1,15 @@
-[ORG 0x00]
-[BITS 16]
+[ORG 0x00]    ; 코드의 시작 어드레스를 0x00으로 설정
+[BITS 16]     ; 이하의 코드는 16비트 코드로 설정
 
-SECTION .txt
+SECTION .txt  ; text 섹션(세그먼트)을 정의
 
 START:
     mov ax, 0x1000  ; 보호 모드 엔트리 포인트의 시작 어드레스(0x10000)를 세그먼트 레지스터 값으로 변환
-    mov ds, ax
-    mov es, ax
+    mov ds, ax      ; DS 세그먼트 레지스터에 설정
+    mov es, ax      ; ES 세그먼트 레지스터에 설정
 
-    cli         ; 인터럽트가 발생하지 못하도록 설정
-    lgdt [GDTR] ; GDTR 자료구조를 프로세서에 설정하여 GDT 테이블을 로드
+    cli             ; 인터럽트가 발생하지 못하도록 설정
+    lgdt [GDTR]     ; GDTR 자료구조를 프로세서에 설정하여 GDT 테이블을 로드
 
     ; 보호 모드로 진입
     ; Disable Paging, Disable Cache, Internal FPU, Disable Align Check, Enable ProtectedMode
@@ -21,7 +21,7 @@ START:
     jmp dword 0x08: (PROTECTEDMODE - $$ + 0x10000)
 
 ; 보호 모드로 진입
-[BITS 32]
+[BITS 32]           ; 이하의 코드는 32비트 코드로 설정
 PROTECTEDMODE:
     mov ax, 0x10    ; 보호 모드 커널용 데이터 세그먼트 디스크립터를 AX 레지스터에 저장
     mov ds, ax      ; DS 세그먼트 셀렉터에 설정
@@ -36,64 +36,74 @@ PROTECTEDMODE:
 
     ; 화면에 보호 모드로 전환되었다는 메시지를 출력한다.
     push (SWITCHSUCCESSMESSAGE - $$ + 0x10000)  ; 출력할 메시지의 어드레스를 스택에 삽입
-    push 2  ; 화면 Y 좌표 (2) 스택에 삽입
-    push 0  ; 화면 X 좌료 (0) 스택에 삽입
-    call PRINTMESSAGE
-    add esp, 12 ; 삽입한 파라미터 제거
+    push 2                                      ; 화면 Y 좌표 (2) 스택에 삽입
+    push 0                                      ; 화면 X 좌료 (0) 스택에 삽입
+    call PRINTMESSAGE                           ; PRINTMESSAGE 함수 호출
+    add esp, 12                                 ; 삽입한 파라미터 제거
 
-    jmp $
+    jmp dword 0x08: 0x10200    ; C 언어 커널이 존재하는 0x10200 어드레스로 이동하여 C 언어 커널 수행
 
+;;;;;;;;;;;;;;;;;;;;;;
+;     함수 코드 영역
+;;;;;;;;;;;;;;;;;;;;;;
+; 메시지 출력하는 함수
+; 스택에 x 좌표, y 좌표, 문자열
 PRINTMESSAGE:
-    push ebp    ; 베이스 포인터 레지스터 (BP) 를 스택에 삽입
+    push ebp        ; 베이스 포인터 레지스터 (BP) 를 스택에 삽입
     mov ebp, esp    ; 베이스 포인터 레지스터(BP)에 스택 포인터 레지스터(SP)의 값을 설정
-    push esi    ; 함수에서 임시로 사용하는 레지스터로 함수의 마지막 부분에서 스택에 삽입된 값을 꺼내 원래 값으로 복원
+    push esi        ; 함수에서 임시로 사용하는 레지스터로 함수의 마지막 부분에서 스택에 삽입된 값을 꺼내 원래 값으로 복원
     push edi
     push eax
     push ecx
     push edx
 
-    mov eax, dword[ebp + 12]   ; 파라미터 2(화면 좌표 Y) 를 EAX 레지스터에 설정
+    ; X, Y의 좌표로 비디오 메모리의 어드레스를 계산함
+    ; Y 좌표를 이용해서 먼저 라인 어드레스를 구함
+    mov eax, dword[ebp + 12]    ; 파라미터 2(화면 좌표 Y) 를 EAX 레지스터에 설정
     mov esi, 160                ; 한 라인의 바이트 수 (2 * 80) 를 ESI 레지스터에 저장
     mul esi                     ; EAX 레지스터와 ESI 레지스터를 곱하여 화면 Y 어드레스 계산
     mov edi, eax                ; 계산된 화면 Y 어드레스를 EDI 레지스터에 설정
 
-    mov eax, dword[ebp + 8]    ; 파라미터 1(화면 좌표 X) 를 EAX 레지스터에 설정
+    mov eax, dword[ebp + 8]     ; 파라미터 1(화면 좌표 X) 를 EAX 레지스터에 설정
     mov esi, 2                  ; 한 문자를를 나타내는 바이트 수 (2) 를 ESI 레지스터에 저장
     mul esi                     ; EAX 레지스터와 ESI 레지스터를 곱하여 화면 X 어드레스 계산
     add edi, eax                ; 계산된 화면 Y 어드레스를 EDI 레지스터에 설정
 
     ; 출력할 문자열 어드레스
-    mov esi, dword[ebp + 16]    ; 파라미터 3(출력할 문자열 어드레스
+    mov esi, dword[ebp + 16]    ; 파라미터 3 (출력할 문자열 어드레스)
 
-.MESSAGELOOP:
+.MESSAGELOOP:           ; 메시지 출력하는 루프
     mov cl, byte[esi]   ; ESI 레지스터가 가리키는 문자열 위치에서 한 문자를 CL 레지스터에 복사
                         ; CL 레지스터는 ECX 레지스터의 하위 1바이트를 의미
                         ; 문자열은 1바이트로 충분하므로 ECX 레지스터의 하위 1바이트만 사용
 
-    cmp cl, 0
-    je .MESSAGEEND
+    cmp cl, 0           ; 복사된 문자와 0을 비교
+    je .MESSAGEEND      ; 복사한 문자의 값이 0이면 문자열이 종료되었음을 의미하므로 .MESSAGEEND로 이동하여 문자 출력 종료
 
     mov byte[edi + 0xB8000], cl    ; 0이 아니라면 비디오 메모리 어드레스 0xB8000 + EDI 에 문자를 출력
 
     add esi, 1  ; ESI 레지스터에 1을 더하여 다음 문자열로 이동
     add edi, 2  ; EDI 레지스터에 2를 더하여 비디오 메모리의 다음 문자 위치로 이동
                 ; 비디오 메모리는 (문자, 속성)의 쌍으로 구성되므로 문자만 출력하려면 2를 더해야 함.
-    jmp .MESSAGELOOP
+
+    jmp .MESSAGELOOP   ; 메시지 출력 루프로 이동하여 다음 문자를 출력
 
 .MESSAGEEND:
-    pop edx
-    pop ecx
-    pop eax
-    pop edi
-    pop esi
-    pop ebp
-    ret
+    pop edx    ; 함수에서 사용이 끝난 EDX 레지스터부터 EBP 레지스터까지를 스택에
+    pop ecx    ; 삽입된 값을 이용해서 복원
+    pop eax    ; 스택은 가장 마지막에 들어간 데이터가 가장 먼저 나오는
+    pop edi    ; 자료구조이므로 삽입의 역순으로
+    pop esi    ; 제거해야 함
+    pop ebp    ; 베이스 포인터 레지스터(BP) 복원
+    ret        ; 함수를 호출한 다음 코드의 위치로 복귀
 
-; 데이터 영역
+;;;;;;;;;;;;;;;;;;;;;;
+;      데이터 영역
+;;;;;;;;;;;;;;;;;;;;;;
 ; 아래의 데이터들을 8바이트에 맞춰 정렬하기 위해서 추가
 align 8, db 0
 
-;GDTR 의 끝을 8byte 로 정렬하기 위해 추가
+; GDTR 의 끝을 8byte 로 정렬하기 위해 추가
 dw 0x0000
 ; GDTR 자료구조 정의
 GDTR:
