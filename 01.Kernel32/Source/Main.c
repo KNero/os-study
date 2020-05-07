@@ -14,7 +14,7 @@ void Main( void )
 	DWORD dwEAX, dwEBX, dwECX, dwEDX;
 	char vcVendorString[13] = {0,};
 
-	kPrintString(0, 3, "Protected Mode C Language Kernel Start.....................[Pass]");
+	kPrintString(0, 3, "Protected Mode C Language Kernel Start......[Pass]");
 
 	// 최소 메모리 크기를 만족하는 지 검사
 	kPrintString(0, 4, "Minimum Memory Size Check...................[    ]");
@@ -156,6 +156,7 @@ void kCopyKernel64ImageTo2MByte(void)
 
 	pdwSourceAddress = (DWORD*)(0x10000 + (wKernel32SectorCount * 512));
 	pdwDestinationAddress = (DWORD*)0x200000;
+
 	// IA-32e 모드 커널 섹터 크기만큼 복사
 	for (i = 0; i < 512 * (wTotalKernelSectorCount - wKernel32SectorCount) / 4; i++)
 	{

@@ -26,7 +26,7 @@ ExecuteInternalBuild: dep
 	make -C $(OBJECTDIRECTORY) -f ../makefile Kernel64.elf
 
 Kernel64.bin: ExecuteInternalBuild
-	$(OBJCOPY64) $(OBJECTDIRECTORY)/Kernel64.elf $@
+	$(OBJCOPY64) $(OBJECTDIRECTORY)/Kernel64.elf $(OBJECTDIRECTORY)/$@
 
 clean:
 	rm -f *.bin

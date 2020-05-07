@@ -49,7 +49,7 @@ Utility:
 	@echo ================ Utility Build Start ================
 	@echo
 
-	mek -C 04.Utility
+	make -C 04.Utility
 
 	@echo
 	@echo ================ Utility Build Complete ================
